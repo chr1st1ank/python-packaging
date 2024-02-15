@@ -4,10 +4,20 @@ version = "0.1.0"
 description = ""
 authors = ["chr1st1ank <chr1st1ank@krudewig-online.de>"]
 license = "MIT"
+packages = [
+    { include = "langc" },
+    { include = "langc/models/*.onnx", format = [
+        "sdist",
+        "wheel",
+    ] },
+]
+[tool.poetry.scripts]
+langc = 'langc.main:main'
 
 [tool.poetry.dependencies]
 python = "^3.9"
 onnxruntime = "^1.8.1"
+click = "^8.1.7"
 
 [tool.poetry.dev-dependencies]
 

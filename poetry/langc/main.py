@@ -1,7 +1,7 @@
-from pathlib import Path
-import sys
 from typing import Tuple
+import importlib.resources
 
+import click
 import onnxruntime
 import numpy as np
 
@@ -14,25 +14,27 @@ def init_onnx_session(model_path) -> onnxruntime.InferenceSession:
     sess_options.graph_optimization_level = (
         onnxruntime.GraphOptimizationLevel.ORT_ENABLE_ALL
     )
-    onnx_session = onnxruntime.InferenceSession(
-        model_path, sess_options
-    )
+    onnx_session = onnxruntime.InferenceSession(model_path, sess_options)
     return onnx_session
 
 
-def predict_language(onnx_session, string_input: str) -> Tuple[str, float]:
+def predict_language(onnx_session, input_string: str) -> Tuple[str, float]:
     """Runs a prediction using the onnx model and returns the most likely label and confidence"""
     pred_onx = onnx_session.run(
-        None, {"string_input": np.array([string_input]).reshape(1, 1)}
+        None, {"string_input": np.array([input_string]).reshape(1, 1)}
     )
     label = pred_onx[0][0]
     probas = pred_onx[1][0]
-    return {"text": string_input, "language": label, "confidence": probas[label]}
+    return {"text": input_string, "language": label, "confidence": probas[label]}
 
 
-def main():
-    onnx_session = init_onnx_session(Path(__file__).parent.parent / "classifier.onnx")
-    prediction = predict_language(onnx_session, sys.argv[1])
+@click.command(help="Predicts the language of a text")
+@click.argument("input_string")
+def main(input_string):
+    model = importlib.resources.path("langc.models", "classifier.onnx")
+
+    onnx_session = init_onnx_session(model)
+    prediction = predict_language(onnx_session, input_string)
     print(prediction)
 
 
