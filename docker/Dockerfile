@@ -1,12 +1,14 @@
 FROM python:3.11-slim-bookworm
 
+ARG SRC_FOLDER
+
 RUN mkdir -p /app
 WORKDIR /app
 
-COPY requirements.lock /app/
+COPY $SRC_FOLDER/requirements.lock /app/
 RUN pip install --no-cache-dir -r requirements.lock
 
-COPY dist/*.whl /app/
+COPY $SRC_FOLDER/dist/*.whl /app/
 RUN pip install *.whl && ls -l /app 
 
 EXPOSE 8080
