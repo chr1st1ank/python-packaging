@@ -352,41 +352,100 @@ From a wheel:
 ```
 
 --- 
-## Python application in docker
-### the common way ©D&A
+
+## Python applications in Docker/OCI
+
+Do we have everything to deploy an application now?
+
+- A Python interpreter environment 🙌
+- Dependencies - compatible versions or exact version 🙌
+- The python modules ✅
+- (maybe) Binary extensions ✅
+- (maybe) Resources (e.g. icons, ML models, man page) ✅
+- Entry points ✅
+
+➡️ The image should provide the rest
+
+---
+
+### Docker images the usual way
+
+```
+FROM python:3.9-slim-bookworm
+
+COPY ./environment/requirements.txt ./
+RUN python -m pip install -r ./requirements.txt --no-cache-dir
+
+ENV PYTHONPATH "${PYTHONPATH}:/workspace"    # <== Because imports didn't work
+
+COPY ./pypackage ./pypackage                 #
+COPY ./api ./api                             # <== Don't forget anything
+COPY ./config ./config                       #
+COPY ./entrypoint.py ./entrypoint.py         #
+
+EXPOSE 8080
+
+CMD ["python", "entrypoint.py"]
+```
 
 ----
 
 ### Docker on wheels
 
+![](https://kroki.io/mermaid/svg/eNpNjD0LwjAQQPf8iiOSzYJzBCcXwakOziF3aULPplxSKpT8dz9wcHvvDc-YLU2pWth04Lz66KTqjyEFt3DtaUISknfTxKNuDZoxahA3R7j2St3yIp4KdN0J7pGIv3R5uIGU8uxKOVOA3w1CYrY7RNyXKnmkf-7WhDXaw_w8vgCbcTIg)
+
+```
+FROM python:3.9-slim-bookworm
+
+COPY ./environment/requirements.txt ./                          # Still good for caching 🤷‍♂️
+RUN python -m pip install -r ./requirements.txt --no-cache-dir  # but not necessary
+
+# no more PYTHONPATH mangling
+
+COPY ./dist/*.whl ./                                            # We copy the wheel
+RUN python -m pip install *.whl                                 # and install it
+
+EXPOSE 8080
+
+CMD ["myapi"]                                                   # Entrypoints are easy
+```
+
+---
+
+### Comparison
+
+Advantages of only Docker:
+
+- No package build step
+
+Advantages of Python + Docker builds:
+
+- No problems with PYTHONPATH
+- Binary extensions (e.g. Cython, PyO3) are covered
+- Resources can be already included
+- Entrypoints are available out-of-the-box
+- No docker needed to test completeness of a package
+
 ---
 
 ## Summary
 
+- Python's packages and virtual environments are standardized
+- Distribution of a Python package:
+  - consists of build, upload, download, install steps
+  - there are several tools for each step
+  - all deliver the same output from the same input (+ config)
+- Python environment:
+  - Interpreter needs to be set up separately
+  - Dependencies are covered, but there is some degree of uncertainty
+  - Docker images can help here
+- Combining Python + Docker builds yields a fully standardized workflow
 
-<!--
+---
 
-outline:
+## Thank you!
 
-- intro: python packaging and deployment. Steps involved normally. Then docker.
-- Tooling for the topics 
-- status quo: typical workflow with file copying + requirement installation
-- the standard Python way of packaging
-- a potential workflow with wheel + docker
-- advantages / disadvantages
+Recommended readings:
 
-infos: 
-
-  - https://bernat.tech/presentations/
-  - https://gaborbernat.github.io/packaging-tutorial-pycon-us-21/#/78
-
-things to show:
-
-  - venv -> build -> install -> test -> distribute -> run
-  - poetry for testing or even building the docker image?
-  - issues of manual assembly:
-     - relative imports (PYTHONPATH)
-     - cython
-     - binary
-     - resources
--->
+- Anna-Lena Popkes: [Packaging tools](https://alpopkes.com/posts/python/packaging_tools/)
+- Bernát Gábor [Python packaging demystified](https://bernat.tech/presentations/#py-packaging-us-21)

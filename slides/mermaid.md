@@ -24,3 +24,12 @@ classDef env fill:#003049,color:#fff;
 class dev,t,pypi env;
 class p2,Package,wheel artifact;
 ```
+
+```mermaid
+%%{init: {"flowchart": {"defaultRenderer": "elk"}} }%%
+graph LR
+
+Sources --> Wheel --> Image
+
+classDef default fill:#ddd,stroke:#ddd,stroke-width:0px;
+```
