@@ -50,8 +50,6 @@ style: |
   - [Packaging and testing](#packaging-and-testing)
   - [Python applications in Docker/OCI](#python-applications-in-dockeroci)
   - [Summary](#summary)
-  - [Thank you!](#thank-you)
-
 
 ---
 

@@ -1,7 +1,7 @@
 # Makefile for compiling requirements
 # pip-compile must be installed
 
-SOURCE_FOLDER = setuptools
+SOURCE_FOLDER = poetry
 PYTHON = python
 PIP_COMPILE = $(PYTHON) -m piptools compile
 PIP_COMPILE_ARGS = --quiet --upgrade --resolver backtracking --no-emit-index-url --annotation-style line
