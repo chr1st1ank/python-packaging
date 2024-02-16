@@ -12,12 +12,14 @@ packages = [
     ] },
 ]
 [tool.poetry.scripts]
-langc = 'langc.main:main'
+langc = 'langc.cli:main'
+langapi = 'langc.api:main'
 
 [tool.poetry.dependencies]
 python = "^3.9"
 onnxruntime = "^1.8.1"
 click = "^8.1.7"
+bottle = "^0.12.25"
 
 [tool.poetry.dev-dependencies]
 

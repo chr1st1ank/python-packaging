@@ -35,6 +35,24 @@ style: |
 
 ![bg left:40% 80%](Python-logo-notext.svg.png)
 
+- [**Python Packaging**](#python-packaging)
+  - [The Python import system](#the-python-import-system)
+    - [Different module types](#different-module-types)
+    - [How does importing work?](#how-does-importing-work)
+    - [The parts of an installed Python package](#the-parts-of-an-installed-python-package)
+  - [Distributing a Python package](#distributing-a-python-package)
+    - [Short history of Python packaging](#short-history-of-python-packaging)
+    - [The tooling landscape](#the-tooling-landscape)
+    - [What is needed on the target machine?](#what-is-needed-on-the-target-machine)
+    - [Build](#build)
+    - [Upload](#upload)
+    - [Download](#download)
+    - [Install](#install)
+  - [Python application in docker](#python-application-in-docker)
+    - [the common way ©D\&A](#the-common-way-da)
+    - [Docker on wheels](#docker-on-wheels)
+  - [Summary](#summary)
+
 ---
 
 ## The Python import system
@@ -63,7 +81,7 @@ Type "help", "copyright", "credits" or "license" for more information.
 
 ---
 
-### How does it work?
+### How does importing work?
 
 There are multiple Importers which are called:
 
@@ -126,6 +144,7 @@ pytoml
 ```
 
 Metadata for each package:
+
 ```console
 ❯ ls env/lib/python3.10/site-packages/pytoml-0.1.21.dist-info/
 INSTALLER  LICENSE  METADATA  RECORD  REQUESTED  WHEEL  top_level.txt
@@ -135,21 +154,94 @@ INSTALLER  LICENSE  METADATA  RECORD  REQUESTED  WHEEL  top_level.txt
 
 ---
 
+### Special case: editable install
+
+- `pip install -e <folder>`
+- The package is editable, because it is only linked - [PEP 660](https://peps.python.org/pep-0660/)
+- Entry-points are installed as normally
+
+<div class="twocols">
+
+```console
+❯ lsd --tree venv/lib/python3.11/site-packages/langc*
+langc-0.1.0.dist-info
+├── direct_url.json
+├── entry_points.txt
+├── INSTALLER
+├── METADATA
+├── RECORD
+├── REQUESTED
+└── WHEEL
+langc.pth
+```
+
+<p class="break"></p>
+
+```
+───────┬─────────────────────────────────────────────────────────────────
+       │ File: venv/lib/python3.11/site-packages/langc.pth
+───────┼─────────────────────────────────────────────────────────────────
+   1   │ /home/christian/code/python-packaging/poetry
+```
+
+```
+───────┬─────────────────────────────────────────────────────────────────
+       │ File: venv/bin/langc
+───────┼─────────────────────────────────────────────────────────────────
+   1   │ #!/home/christian/code/python-packaging/poetry/venv/bin/python
+   2   │ # -*- coding: utf-8 -*-
+   3   │ import re
+   4   │ import sys
+   5   │ from langc.cli import main
+   6   │ if __name__ == '__main__':
+   7   │     sys.argv[0] = re.sub(r'(-script\.pyw|\.exe)?$', '', sys.argv[0])
+   8   │     sys.exit(main())
+```
+
+---
+
+
 ## Distributing a Python package
 
 Steps to make a Python package importable on a target system:
 
 ![](https://kroki.io/mermaid/svg/eNp9UM9rwjAUvuevyCodG7RQ3C6rQ8GJIOwwZLfiISYvNpglJUlbRfq_L-mi22mX8PL9eN97L00vQglX4kvCpe5pTYxLwo8BJ610W1AMDBiPJSCPyTDgIU3RwZCmxu9bhBh01Qo6kLoB87o3c6tbQ8HucJ7vWyFZns_xB6FHcgAPtY3UZMSacyOqh8gE48YnnR53KBBeyYSlugOD7wPJdK9uzmkVbSFkjoXtawB5ERaPxWLAKGKeP4MNovFbjW9wbZR1RErPuOqTmAO4kAKqE0arL1Bu96dFovQCL8Myd8mtF0JUEmtXwHG8FeZCynLCGMusM_oIf-u8F8zVZdGcZr9Gf2zBCb0612_L9fPLfwY_YNQWxVPhtVRLbcoJ5zyq_DBd5rLxiF59RZtpFm-W_Wx1jZ59AxTcr2o=)
 
-- Build (sdist or wheel)
-- Upload
+- Build (sdist or wheel) ➡️ `python -m build`
+- Upload ➡️ `python -m twine`
 - Download
 - Build (if sdist)
-- Install
+- Install ➡️ `python -m pip install <package>`
 
 ---
 
-## Short history of Python packaging
+## Tools for the distribution process
+
+<div class="twocols">
+
+- Build
+  - `python -m build`
+  - `poetry build`
+  - `flit build`
+- Upload
+  - `python -m twine`
+  - `poetry publish`
+  - `flit publish`
+- Download, build, install
+  - `python -m pip install <package>`
+
+<p class="break"></p>
+
+Frontend versus backend:
+
+- A frontend:
+  - Installs the build tools
+  - Runs the build backend
+- Some backends have a frontend, too
+
+---
+
+### Short history of Python packaging
 
 <div class="twocols" style="font-size: 85%;">
 
@@ -188,7 +280,6 @@ Steps to make a Python package importable on a target system:
 
 </div>
 
-
 ---
 
 ### What is needed on the target machine?
@@ -208,11 +299,61 @@ For an application:
 
 ---
 
-### Distributing an executable
+### Build
+
+```console
+❯ python -m build
+* Creating virtualenv isolated environment...
+* Installing packages in isolated environment... (poetry-core>=1.0.0)
+* Getting build dependencies for sdist...
+* Building sdist...
+* Building wheel from sdist
+* Creating virtualenv isolated environment...
+* Installing packages in isolated environment... (poetry-core>=1.0.0)
+* Getting build dependencies for wheel...
+* Building wheel...
+Successfully built langc-0.1.0.tar.gz and langc-0.1.0-py3-none-any.whl
+```
+
+---
+
+### Upload
+
+```console
+❯ twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+Uploading distributions to https://test.pypi.org/legacy/
+Enter your API token: 
+Uploading langc-0.1.0-py3-none-any.whl
+100% ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 447.8/447.8 kB • 00:00 • 3.5 MB/s
+Uploading langc-0.1.0.tar.gz
+100% ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 436.7/436.7 kB • 00:00 • 3.7 MB/s
+
+View at:
+https://test.pypi.org/project/langc/0.1.0/
+```
+
+---
+### Download & Install
+
+From a package index:
+
+```console
+❯ pip install --index-url  https://test.pypi.org/simple langc
+Looking in indexes: https://test.pypi.org/simple
+Collecting langc
+  Downloading https://test-files.pythonhosted.org/packages/e7/4c/
+  ...
+```
+
+From a wheel:
+```console
+❯ venv2/bin/pip install /home/christian/code/python-packaging/poetry/dist/langc-0.1.0-py3-none-any.whl
+...
+```
 
 --- 
-
-### Docker: the common way
+## Python application in docker
+### the common way ©D&A
 
 ----
 
@@ -220,7 +361,7 @@ For an application:
 
 ---
 
-### Summary
+## Summary
 
 
 <!--
