@@ -22,8 +22,11 @@ style: |
   div.twocols ul li p:first-child {
     margin-top: 0 !important;
   }
-  div.twocols ul {
+  div.twocols p.break+ul {
     margin-top: 0 !important;
+  }
+  div.twocols p.break+p {
+      margin-top: 0px;
   }
   div.twocols p.break {
     break-before: column;
@@ -35,23 +38,20 @@ style: |
 
 ![bg left:40% 80%](Python-logo-notext.svg.png)
 
+--- 
+
+## Outline
+
 - [**Python Packaging**](#python-packaging)
+  - [Outline](#outline)
   - [The Python import system](#the-python-import-system)
-    - [Different module types](#different-module-types)
-    - [How does importing work?](#how-does-importing-work)
-    - [The parts of an installed Python package](#the-parts-of-an-installed-python-package)
   - [Distributing a Python package](#distributing-a-python-package)
-    - [Short history of Python packaging](#short-history-of-python-packaging)
-    - [The tooling landscape](#the-tooling-landscape)
-    - [What is needed on the target machine?](#what-is-needed-on-the-target-machine)
-    - [Build](#build)
-    - [Upload](#upload)
-    - [Download](#download)
-    - [Install](#install)
-  - [Python application in docker](#python-application-in-docker)
-    - [the common way ©D\&A](#the-common-way-da)
-    - [Docker on wheels](#docker-on-wheels)
+  - [Tools for the distribution process](#tools-for-the-distribution-process)
+  - [Packaging and testing](#packaging-and-testing)
+  - [Python applications in Docker/OCI](#python-applications-in-dockeroci)
   - [Summary](#summary)
+  - [Thank you!](#thank-you)
+
 
 ---
 
@@ -127,6 +127,7 @@ env/bin/
 ```
 
 <p class="break"></p>
+
 `site-packages` holds the modules:
 
 ```console
@@ -350,8 +351,49 @@ From a wheel:
 ❯ venv2/bin/pip install /home/christian/code/python-packaging/poetry/dist/langc-0.1.0-py3-none-any.whl
 ...
 ```
-
 --- 
+
+## Packaging and testing
+
+<div class="twocols" style="font-size: 85%;">
+
+```shell
+pip install poetry
+poetry install
+
+poetry run pytest
+```
+
+Issues, especially for libraries:
+
+- Running on lock file dependencies
+- Build dependencies are also available and tests may succeed only because of this
+- Files in the sources may not be packaged
+
+<p class="break"></p>
+
+Wouldn't it be cleaner to test the *package*?
+
+```shell
+pip install build
+pyproject-build --wheel
+
+# ... move to clean folder and new Python environment
+
+# Install the library from the wheel including test dependencies
+pip install source-folder/dist/*.whl[test]
+
+# Get the test code
+cp source-folder/test ./
+
+# Test
+python -m pytest
+```
+
+</div>
+
+
+---
 
 ## Python applications in Docker/OCI
 
